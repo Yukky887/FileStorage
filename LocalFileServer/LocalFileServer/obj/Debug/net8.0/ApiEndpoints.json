@@ -61,6 +61,38 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "LocalFileServer.Controllers.FileController",
+    "Method": "Delete",
+    "RelativePath": "api/File",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "name",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "LocalFileServer.Controllers.FileController",
+    "Method": "Download",
+    "RelativePath": "api/File/download",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "name",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "LocalFileServer.Controllers.WeatherForecastController",
     "Method": "Get",
     "RelativePath": "WeatherForecast",

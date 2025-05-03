@@ -56,3 +56,4 @@ D:\ProgektsVS\FileStorage\LocalFileServer\LocalFileServer\obj\Debug\net8.0\refin
 D:\ProgektsVS\FileStorage\LocalFileServer\LocalFileServer\obj\Debug\net8.0\LocalFileServer.pdb
 D:\ProgektsVS\FileStorage\LocalFileServer\LocalFileServer\obj\Debug\net8.0\LocalFileServer.genruntimeconfig.cache
 D:\ProgektsVS\FileStorage\LocalFileServer\LocalFileServer\obj\Debug\net8.0\ref\LocalFileServer.dll
+D:\ProgektsVS\FileStorage\LocalFileServer\LocalFileServer\obj\Debug\net8.0\LocalFileServer.sourcelink.json

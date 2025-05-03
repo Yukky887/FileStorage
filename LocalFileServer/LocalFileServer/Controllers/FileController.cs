@@ -49,5 +49,50 @@ namespace LocalFileServer.Controllers
 
             return Ok("Файл " + file.FileName + " загружен!");
         }
+
+        [HttpGet("download")]
+        public IActionResult Download([FromQuery] string name)
+        {
+
+            Console.WriteLine($"Запрошен файл: {name}");
+
+            if (string.IsNullOrEmpty(name))
+            {
+                return BadRequest("Имя файла не указано");
+            }
+
+            string path = Path.Combine("D:\\ProgektsVS", name);
+
+            if (!System.IO.File.Exists(path))
+            {
+                return NotFound($"Файл не найден: {path}");
+            }
+
+            var fileBytes = System.IO.File.ReadAllBytes(path);
+            var contentType = "application/octet-stream";
+            return File(fileBytes, contentType, name);
+        }
+
+        [HttpDelete]
+        public IActionResult Delete([FromQuery] string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return BadRequest("Имя файла не указано");
+            }
+
+            string path = Path.Combine("D:\\ProgektsVS", name);
+
+            try
+            {
+                System.IO.File.Delete(path);
+                return Ok("Файл удален: " + name);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, "Ошибка при удалении: " + ex.Message);
+            }
+        }
+
     }
 }
