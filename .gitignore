@@ -1,0 +1,6 @@
+# Visual Studio временные файлы
+.vs/
+*/bin/
+*/obj/
+*.user
+*.suo
