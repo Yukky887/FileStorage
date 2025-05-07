@@ -72,15 +72,18 @@
                         Click="OnUploadFileClick"
                         Style="{StaticResource ModernButton}"
                         Margin="0,0,0,10"/>
-                
+
                 <Button x:Name="BtnDownload" Content="📥 Скачать файл" 
                         Click="OnDownloadFileClick"
                         Style="{StaticResource ModernButton}"
                         Margin="0,0,0,10"/>
-                
                 <Button x:Name="BtnDelete" Content="🗑️ Удалить файл" 
                         Click="OnDeleteFileClick"
                         Style="{StaticResource ModernButton}"/>
+                <CheckBox x:Name="DownloadAsZipCheckBox"
+                          Content="Скачивать как ZIP"
+                          Margin="5,10,0,10"
+                          Foreground="Black"/>
             </StackPanel>
 
             <!-- Files List -->
@@ -91,6 +94,7 @@
                     BorderBrush="#FFDDDDDD"
                     Padding="5">
                 <ListView x:Name="FilesList" 
+                          SelectionMode="Extended"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListView.ItemTemplate>
                         <DataTemplate>

@@ -38,70 +38,110 @@ namespace FileClient
 
         private async void OnUploadFileClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new OpenFileDialog();
+            var dialog = new OpenFileDialog
+            {
+                Multiselect = true,
+                Filter = "All Files|*.*"
+            };
+
             if (dialog.ShowDialog() == true)
             {
+                var content = new MultipartFormDataContent();
+
+                foreach (var filePath in dialog.FileNames)
+                {
+                    var stream = File.OpenRead(filePath);
+                    var fileName = Path.GetFileName(filePath);
+                    content.Add(new StreamContent(stream), "files", fileName);
+                }
+
                 try
                 {
-                    using var stream = File.OpenRead(dialog.FileName);
-                    var content = new MultipartFormDataContent();
-                    content.Add(new StreamContent(stream), "file", Path.GetFileName(dialog.FileName));
-
-                    var response = await _client.PostAsync("api/file", content);
+                    var response = await _client.PostAsync("api/file/multiple", content);
                     var result = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show("Ответ сервера: " + result);
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        StatusText.Text = $"Файл \"{Path.GetFileName(dialog.FileName)}\" загружен.";
-                        RefreshFileList();
-                    }
-                    else
-                    {
-                        StatusText.Text = "Ошибка загрузки.";
-                        MessageBox.Show("Ошибка: " + result);
-                    }
+                    var files = await _client.GetFromJsonAsync<List<string>>("api/file");
+                    FilesList.ItemsSource = files;
                 }
                 catch (Exception ex)
                 {
-                    StatusText.Text = "Ошибка при загрузке файла.";
-                    MessageBox.Show("Ошибка:\n" + ex.Message);
+                    MessageBox.Show("Ошибка при загрузке:\n" + ex.Message);
                 }
             }
         }
 
         private async void OnDownloadFileClick(object sender, RoutedEventArgs e)
         {
-            if (FilesList.SelectedItem is not string fileName)
+            var selectedItems = FilesList.SelectedItems.Cast<string>().ToList();
+            if (!selectedItems.Any())
             {
-                MessageBox.Show("Выберите файл из списка.");
+                MessageBox.Show("Выберите один или несколько файлов из списка.");
                 return;
             }
 
-            var dialog = new SaveFileDialog { FileName = fileName };
-
-            if (dialog.ShowDialog() == true)
+            // Если выбрано несколько файлов или включена галочка — архивируем
+            if (selectedItems.Count > 1 || DownloadAsZipCheckBox.IsChecked == true)
             {
-                try
+                var dialog = new SaveFileDialog
                 {
-                    var response = await _client.GetAsync($"api/file/download?name={Uri.EscapeDataString(fileName)}");
+                    FileName = "files.zip",
+                    Filter = "ZIP Archive (*.zip)|*.zip"
+                };
 
-                    if (response.IsSuccessStatusCode)
+                if (dialog.ShowDialog() == true)
+                {
+                    try
                     {
-                        var bytes = await response.Content.ReadAsByteArrayAsync();
-                        File.WriteAllBytes(dialog.FileName, bytes);
-                        StatusText.Text = $"Файл \"{fileName}\" сохранён.";
+                        var content = JsonContent.Create(selectedItems);
+                        var response = await _client.PostAsync("api/file/download-multiple", content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var zipBytes = await response.Content.ReadAsByteArrayAsync();
+                            File.WriteAllBytes(dialog.FileName, zipBytes);
+                            MessageBox.Show("ZIP-файл сохранён.");
+                        }
+                        else
+                        {
+                            var error = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show("Ошибка: " + error);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        var msg = await response.Content.ReadAsStringAsync();
-                        StatusText.Text = "Ошибка при скачивании.";
-                        MessageBox.Show("Ошибка: " + msg);
+                        MessageBox.Show("Ошибка при скачивании:\n" + ex.Message);
                     }
                 }
-                catch (Exception ex)
+            }
+            else
+            {
+                // Обычное скачивание одного файла
+                var fileName = selectedItems.First();
+                var dialog = new SaveFileDialog { FileName = fileName };
+
+                if (dialog.ShowDialog() == true)
                 {
-                    StatusText.Text = "Ошибка при скачивании файла.";
-                    MessageBox.Show("Ошибка:\n" + ex.Message);
+                    try
+                    {
+                        var response = await _client.GetAsync($"api/file/download?name={Uri.EscapeDataString(fileName)}");
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var bytes = await response.Content.ReadAsByteArrayAsync();
+                            File.WriteAllBytes(dialog.FileName, bytes);
+                            MessageBox.Show("Файл сохранён.");
+                        }
+                        else
+                        {
+                            var msg = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show("Ошибка: " + msg);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ошибка при скачивании:\n" + ex.Message);
+                    }
                 }
             }
         }
