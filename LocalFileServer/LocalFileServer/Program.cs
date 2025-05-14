@@ -4,14 +4,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-var baseAddress = "http://localhost:5125";
-
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 
-//app.UseHttpsRedirection();
+app.Urls.Add("http://0.0.0.0:5125");
 
 app.UseAuthorization();
 

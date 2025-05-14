@@ -4,6 +4,8 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
+using System.Windows.Media.Media3D;
+using System.Windows.Shapes;
 using Microsoft.Win32;
 
 namespace FileClient
@@ -15,7 +17,7 @@ namespace FileClient
         public MainWindow()
         {
             InitializeComponent();
-            _client.BaseAddress = new Uri("http://localhost:5125");
+            _client.BaseAddress = new Uri("http://178.141.247.15:5125");
             RefreshFileList(); // Загружаем список при запуске
         }
 
@@ -23,7 +25,7 @@ namespace FileClient
         {
             try
             {
-                var files = await _client.GetFromJsonAsync<List<string>>("api/file");
+                var files = await _client.GetFromJsonAsync<List<FileItem>>("api/file");
                 FilesList.ItemsSource = files;
                 StatusText.Text = "Список файлов обновлён.";
             }
@@ -33,6 +35,7 @@ namespace FileClient
                 MessageBox.Show("Ошибка:\n" + ex.Message);
             }
         }
+
 
         private void OnGetFileClick(object sender, RoutedEventArgs e) => RefreshFileList();
 
@@ -51,7 +54,7 @@ namespace FileClient
                 foreach (var filePath in dialog.FileNames)
                 {
                     var stream = File.OpenRead(filePath);
-                    var fileName = Path.GetFileName(filePath);
+                    var fileName = System.IO.Path.GetFileName(filePath);
                     content.Add(new StreamContent(stream), "files", fileName);
                 }
 
@@ -148,37 +151,86 @@ namespace FileClient
 
         private async void OnDeleteFileClick(object sender, RoutedEventArgs e)
         {
-            if (FilesList.SelectedItem is not string fileName)
+            var selectedItems = FilesList.SelectedItems.Cast<string>().ToList();
+
+            if (selectedItems == null || selectedItems.Count == 0)
             {
-                MessageBox.Show("Выберите файл из списка.");
+                MessageBox.Show("Выберите хотя бы один файл для удаления.");
                 return;
             }
 
-            var result = MessageBox.Show($"Удалить файл \"{fileName}\"?", "Подтверждение", MessageBoxButton.YesNo);
-            if (result != MessageBoxResult.Yes)
+            var confirm = MessageBox.Show($"Удалить выбранные файлы ({selectedItems.Count})?", "Подтверждение", MessageBoxButton.YesNo);
+            if (confirm != MessageBoxResult.Yes)
                 return;
 
             try
             {
-                var response = await _client.DeleteAsync($"api/file?name={Uri.EscapeDataString(fileName)}");
+                var response = await _client.SendAsync(new HttpRequestMessage
+                {
+                    Method = HttpMethod.Delete,
+                    RequestUri = new Uri(_client.BaseAddress, "api/file/multiple"),
+                    Content = JsonContent.Create(selectedItems)
+                });
+
                 var message = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    StatusText.Text = $"Файл \"{fileName}\" удалён.";
-                    RefreshFileList();
+                    MessageBox.Show(message);
+                    var files = await _client.GetFromJsonAsync<List<FileItem>>("api/file");
+                    FilesList.ItemsSource = files;
                 }
                 else
                 {
-                    StatusText.Text = "Ошибка при удалении.";
                     MessageBox.Show("Ошибка: " + message);
                 }
             }
             catch (Exception ex)
             {
-                StatusText.Text = "Ошибка при удалении файла.";
-                MessageBox.Show("Ошибка:\n" + ex.Message);
+                MessageBox.Show("Ошибка при удалении:\n" + ex.Message);
             }
         }
+
+        private void FilesList_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+
+            e.Handled = true;
+        }
+
+        private async void FileList_Drop(object sender, DragEventArgs e)
+        {
+            if(!e.Data.GetDataPresent(DataFormats.FileDrop)) { return; }
+
+            string[] droppedFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
+            var content = new MultipartFormDataContent();
+
+            foreach (var filePath in droppedFiles)
+            {
+                var stream = File.OpenRead(filePath);
+                var fileName = System.IO.Path.GetFileName(filePath);
+                content.Add(new StreamContent(stream), "files", fileName);
+            }
+            try
+            {
+                var response = await _client.PostAsync("api/file/multiple", content);
+                var result = await response.Content.ReadAsStringAsync();
+                MessageBox.Show("Ответ сервера: " + result);
+
+                RefreshFileList();
+            }
+            catch (Exception ex) 
+            {
+                MessageBox.Show("Ошибка при загрузке файлов:\n" + ex.Message);
+            }
+        }
+
     }
 }

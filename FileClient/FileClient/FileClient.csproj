@@ -8,4 +8,22 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Resources\Icons\archive.png" />
+    <None Remove="Resources\Icons\audio.png" />
+    <None Remove="Resources\Icons\image.png" />
+    <None Remove="Resources\Icons\pdf.png" />
+    <None Remove="Resources\Icons\text.png" />
+    <None Remove="Resources\Icons\video.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Icons\archive.png" />
+    <Resource Include="Resources\Icons\audio.png" />
+    <Resource Include="Resources\Icons\image.png" />
+    <Resource Include="Resources\Icons\pdf.png" />
+    <Resource Include="Resources\Icons\text.png" />
+    <Resource Include="Resources\Icons\video.png" />
+  </ItemGroup>
+
 </Project>

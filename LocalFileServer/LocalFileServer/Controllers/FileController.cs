@@ -12,19 +12,33 @@ namespace LocalFileServer.Controllers
     [Route("api/[controller]")] // Адрес будет: api/file
     public class FileController : ControllerBase
     {
+
+        private readonly string _uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "D:\\ProgektsVS");
+
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IEnumerable<FileItem> Get()
         {
             string path = "D:\\ProgektsVS";
 
             if (!Directory.Exists(path))
             {
-                return new List<string> { "Нет такой папки" };
+                return new List<FileItem>();
             }
 
             var files = Directory.GetFiles(path);
-            return files.Select(Path.GetFileName);
+
+            return files.Select(filePath =>
+            {
+                var info = new FileInfo(filePath);
+                return new FileItem
+                {
+                    Name = info.Name,
+                    Size = info.Length,
+                    LastModified = info.LastWriteTime
+                };
+            });
         }
+
 
         [HttpPost("multiple")]
         public async Task<IActionResult> Upload([FromForm] List<IFormFile> files)
@@ -135,6 +149,36 @@ namespace LocalFileServer.Controllers
             {
                 return StatusCode(500, "Ошибка при удалении: " + ex.Message);
             }
+        }
+
+        [HttpDelete("multiple")]
+        public IActionResult DeleteMultiple([FromBody] List<string> names)
+        {
+            if (names == null || names.Count == 0)
+            {
+                return BadRequest("Список файлов пуст.");
+            }
+
+
+            int deletedCount = 0;
+
+
+            foreach (var name in names)
+            {
+                var path = Path.Combine("D:\\ProgektsVS", name);
+
+                Console.WriteLine($"Путь к удаляемому файлу: {path}");
+                if (System.IO.File.Exists(path))
+                {
+                    System.IO.File.Delete(path);
+                    deletedCount++;
+                }
+            }
+           
+
+            return Ok($"Удалено файлов: {deletedCount} из {names.Count}");
+           
+
         }
 
     }

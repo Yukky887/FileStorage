@@ -37,3 +37,5 @@ D:\ProgektsVS\FileStorage\FileClient\FileClient\obj\Debug\net8.0-windows\FileCli
 D:\ProgektsVS\FileStorage\FileClient\FileClient\obj\Debug\net8.0-windows\FileClient.genruntimeconfig.cache
 D:\ProgektsVS\FileStorage\FileClient\FileClient\obj\Debug\net8.0-windows\ref\FileClient.dll
 D:\ProgektsVS\FileStorage\FileClient\FileClient\obj\Debug\net8.0-windows\FileClient.sourcelink.json
+D:\ProgektsVS\FileStorage\FileClient\FileClient\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
+D:\ProgektsVS\FileStorage\FileClient\FileClient\obj\Debug\net8.0-windows\FileClient_MarkupCompile.lref
