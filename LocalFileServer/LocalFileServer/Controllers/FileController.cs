@@ -44,36 +44,33 @@ namespace LocalFileServer.Controllers
         public async Task<IActionResult> Upload([FromForm] List<IFormFile> files)
         {
             if (files == null || files.Count == 0)
-            {
-                return BadRequest("Файл не выбран");
-            }
+                return BadRequest("Файлы не выбраны");
 
-            var uploadFiles = Path.Combine(Directory.GetCurrentDirectory(), "D:\\ProgektsVS");
-            Directory.CreateDirectory(uploadFiles);
-
-            var uploadResults = new List<string>();
+            var uploadPath = "D:\\ProgektsVS";
+            Directory.CreateDirectory(uploadPath);
+            var results = new List<string>();
 
             foreach (var file in files)
             {
                 try
                 {
-                    var filesPath = Path.Combine(uploadFiles, file.FileName);
+                    var safeName = Path.GetFileName(file.FileName);
+                    var savePath = Path.Combine(uploadPath, safeName);
 
-                    using (var stream = new FileStream(filesPath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
+                    using var stream = new FileStream(savePath, FileMode.Create);
+                    await file.CopyToAsync(stream);
 
-                    uploadResults.Add($"Загружен: {file.FileName}");
+                    results.Add($"Загружен: {safeName}");
                 }
                 catch (Exception ex)
                 {
-                    uploadResults.Add($"Ошибка загрузки файла {file.FileName}:\n" + ex.Message);
+                    results.Add($"Ошибка: {file.FileName} — {ex.Message}");
                 }
             }
 
-            return Ok(uploadResults);
+            return Ok(results);
         }
+
 
         [HttpGet("download")]
         public IActionResult Download([FromQuery] string name)
@@ -99,24 +96,25 @@ namespace LocalFileServer.Controllers
         }
 
         [HttpPost("download-multiple")]
-        public IActionResult DownloadMultipleFiles([FromBody] List<string> fileNames)
+        public IActionResult DownloadMultipleFiles([FromBody] List<FileItem> fileNames)
         {
             if (fileNames == null || fileNames.Count == 0)
                 return BadRequest("Список файлов пуст или не передан.");
 
-            var filesPath = Path.Combine(Directory.GetCurrentDirectory(), "D:\\ProgektsVS");
+            var filesPath = "D:\\ProgektsVS";
 
             using var memoryStream = new MemoryStream();
             using (var zip = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
             {
-                foreach (var name in fileNames)
+                foreach (var item in fileNames)
                 {
-                    var filePath = Path.Combine(filesPath, name);
+                    var safeName = Path.GetFileName(item.Name);
+                    var filePath = Path.Combine(filesPath, safeName);
 
                     if (!System.IO.File.Exists(filePath))
                         continue; // можно логировать пропущенные файлы
 
-                    var entry = zip.CreateEntry(name);
+                    var entry = zip.CreateEntry(safeName);
 
                     using var entryStream = entry.Open();
                     using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -152,7 +150,7 @@ namespace LocalFileServer.Controllers
         }
 
         [HttpDelete("multiple")]
-        public IActionResult DeleteMultiple([FromBody] List<string> names)
+        public IActionResult DeleteMultiple([FromBody] List<FileItem> names)
         {
             if (names == null || names.Count == 0)
             {
@@ -163,9 +161,10 @@ namespace LocalFileServer.Controllers
             int deletedCount = 0;
 
 
-            foreach (var name in names)
+            foreach (var item in names)
             {
-                var path = Path.Combine("D:\\ProgektsVS", name);
+                var safeName = Path.GetFileName(item.Name);
+                var path = Path.Combine("D:\\ProgektsVS", safeName);
 
                 Console.WriteLine($"Путь к удаляемому файлу: {path}");
                 if (System.IO.File.Exists(path))

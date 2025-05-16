@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
@@ -61,8 +62,17 @@ namespace FileClient
                 try
                 {
                     var response = await _client.PostAsync("api/file/multiple", content);
-                    var result = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show("Ответ сервера: " + result);
+                    var resultJson = await response.Content.ReadAsStringAsync();
+                    try
+                    {
+                        var messages = JsonSerializer.Deserialize<List<string>>(resultJson);
+                        MessageBox.Show(string.Join("\n", messages));
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show("Ошибка при разборе ответа:\n" + ex.Message + "\nСырой ответ:\n" + resultJson);
+                    }
+                    
 
                     var files = await _client.GetFromJsonAsync<List<string>>("api/file");
                     FilesList.ItemsSource = files;
@@ -76,7 +86,8 @@ namespace FileClient
 
         private async void OnDownloadFileClick(object sender, RoutedEventArgs e)
         {
-            var selectedItems = FilesList.SelectedItems.Cast<string>().ToList();
+            var selectedItems = FilesList.SelectedItems.Cast<FileItem>().ToList();
+            var fileNames = selectedItems.Select(f => f.Name).ToList();
             if (!selectedItems.Any())
             {
                 MessageBox.Show("Выберите один или несколько файлов из списка.");
@@ -120,7 +131,7 @@ namespace FileClient
             else
             {
                 // Обычное скачивание одного файла
-                var fileName = selectedItems.First();
+                var fileName = selectedItems.First().Name;
                 var dialog = new SaveFileDialog { FileName = fileName };
 
                 if (dialog.ShowDialog() == true)
@@ -151,7 +162,7 @@ namespace FileClient
 
         private async void OnDeleteFileClick(object sender, RoutedEventArgs e)
         {
-            var selectedItems = FilesList.SelectedItems.Cast<string>().ToList();
+            var selectedItems = FilesList.SelectedItems.Cast<FileItem>().ToList();
 
             if (selectedItems == null || selectedItems.Count == 0)
             {
@@ -214,9 +225,10 @@ namespace FileClient
 
             foreach (var filePath in droppedFiles)
             {
-                var stream = File.OpenRead(filePath);
                 var fileName = System.IO.Path.GetFileName(filePath);
-                content.Add(new StreamContent(stream), "files", fileName);
+                var bytes = await File.ReadAllBytesAsync(filePath); // загрузка в память
+                var byteContent = new ByteArrayContent(bytes);
+                content.Add(byteContent, "files", fileName);
             }
             try
             {

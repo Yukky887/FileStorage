@@ -11,6 +11,7 @@
   <ItemGroup>
     <None Remove="Resources\Icons\archive.png" />
     <None Remove="Resources\Icons\audio.png" />
+    <None Remove="Resources\Icons\file.png" />
     <None Remove="Resources\Icons\image.png" />
     <None Remove="Resources\Icons\pdf.png" />
     <None Remove="Resources\Icons\text.png" />
@@ -20,6 +21,7 @@
   <ItemGroup>
     <Resource Include="Resources\Icons\archive.png" />
     <Resource Include="Resources\Icons\audio.png" />
+    <Resource Include="Resources\Icons\file.png" />
     <Resource Include="Resources\Icons\image.png" />
     <Resource Include="Resources\Icons\pdf.png" />
     <Resource Include="Resources\Icons\text.png" />
